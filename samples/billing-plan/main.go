@@ -52,7 +52,7 @@ func main() {
 			Type:               gopaypal.RegularPaymentDefinitionType,
 			Cycles:             "0",
 			Frequency:          gopaypal.MonthFrequencyType,
-			FrequenceyInterval: "11",
+			FrequenceyInterval: "1",
 			Amount: &gopaypal.Amount{
 				Currency: gopaypal.UnitedStatesDollar,
 				Value:    "2",

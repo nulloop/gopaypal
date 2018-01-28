@@ -35,7 +35,7 @@ type BillingPlan struct {
 }
 
 func (b *BillingPlan) Create(context *Context) error {
-	resp, err := context.clientWithAuth("POST", "v1/payments/billing-plans", anyToReader(b))
+	resp, err := context.clientWithAuth("POST", "/v1/payments/billing-plans", anyToReader(b))
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (b *BillingPlan) UpdateState(state BillingPlanState, context *Context) erro
 		},
 	}
 
-	resp, err := context.clientWithAuth("PATCH", fmt.Sprintf("v1/payments/billing-plans/%s", b.ID), anyToReader(patches))
+	resp, err := context.clientWithAuth("PATCH", fmt.Sprintf("/v1/payments/billing-plans/%s", b.ID), anyToReader(patches))
 	if err != nil {
 		return err
 	}

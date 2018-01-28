@@ -1,6 +1,9 @@
 package gopaypal
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type OutstandingBalance struct {
 }
@@ -97,11 +100,41 @@ func (b *BillingAgreement) Create(context *Context, billingPlan *BillingPlan) er
 	return readerToAny(resp.Body, b)
 }
 
+func (b *BillingAgreement) ApprovalURL() string {
+	for _, link := range b.Links {
+		if link.Rel == "approval_url" {
+			return link.Href
+		}
+	}
+
+	return ""
+}
+
 func NewBillingAgreement(name, description string, payer *Payer) *BillingAgreement {
 	return &BillingAgreement{
 		Name:        name,
 		Description: description,
-		StartDate:   time.Now().Add(1 * time.Hour).UTC().Format("2006-01-02T15:04:05Z07:00"),
+		StartDate:   time.Now().Add(10 * time.Second).UTC().Format("2006-01-02T15:04:05Z07:00"),
 		Payer:       payer,
 	}
+}
+
+func BillingAgreementExecute(context *Context, token string) error {
+	resp, err := context.clientWithAuth("POST", fmt.Sprintf("/v1/payments/billing-agreements/%s/agreement-execute", token), nil)
+	if err != nil {
+		return err
+	}
+
+	if err = catchError(resp); err != nil {
+		return err
+	}
+
+	result := make(map[string]interface{})
+	if err = readerToAny(resp.Body, &result); err != nil {
+		return err
+	}
+
+	fmt.Println("Billing Agreement Executed", result)
+
+	return nil
 }

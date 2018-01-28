@@ -43,10 +43,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	data, err = json.Marshal(billingAgreement)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// data, err = json.Marshal(billingAgreement)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	fmt.Println("Billing Agreement: ", string(data))
+	fmt.Println("Approval URL: ", billingAgreement.ApprovalURL())
 }
