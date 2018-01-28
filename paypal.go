@@ -30,22 +30,26 @@ type Patch struct {
 	Value     interface{} `json:"value,omitempty"`
 }
 
-type Paypal struct {
-	Mode         Mode
-	ClientID     string
-	ClientSecret string
-	Token        Token
+type Context struct {
+	Mode         Mode   `json:"mode,omitempty"`
+	ClientID     string `json:"client_id,omitempty"`
+	ClientSecret string `json:"client_secret,omitempty"`
+	Token        *Token `json:"token,omitempty"`
 
 	client http.Client
 
-	updateToken func(Token)
+	updateToken func(*Token)
 }
 
-func (p *Paypal) url(urlPath string) string {
+func (p *Context) url(urlPath string) string {
 	return "https://" + path.Join(p.Mode.String(), urlPath)
 }
 
-func (p *Paypal) updateAuthToken() error {
+func (p *Context) updateAuthToken() error {
+	if p.Token == nil {
+		p.Token = &Token{}
+	}
+
 	if p.Token.Valid() {
 		return nil
 	}
@@ -65,7 +69,7 @@ func (p *Paypal) updateAuthToken() error {
 		return err
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(&p.Token)
+	err = json.NewDecoder(resp.Body).Decode(p.Token)
 	if err != nil {
 		return err
 	}
@@ -79,7 +83,7 @@ func (p *Paypal) updateAuthToken() error {
 	return nil
 }
 
-func (p *Paypal) clientWithAuth(method, path string, body io.Reader) (*http.Response, error) {
+func (p *Context) clientWithAuth(method, path string, body io.Reader) (*http.Response, error) {
 	err := p.updateAuthToken()
 	if err != nil {
 		return nil, err
@@ -96,6 +100,6 @@ func (p *Paypal) clientWithAuth(method, path string, body io.Reader) (*http.Resp
 	return p.client.Do(req)
 }
 
-func (p *Paypal) UpdateToken(updateToken func(Token)) {
+func (p *Context) UpdateToken(updateToken func(*Token)) {
 	p.updateToken = updateToken
 }

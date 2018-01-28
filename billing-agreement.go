@@ -54,21 +54,54 @@ type PayerInfo struct {
 }
 
 type Payer struct {
-	PaymentMethod      PaymentMethod        `json:"payment_method,omitempty"`
+	PaymentMethod      PaymentMethod        `json:"payment_method,omitempty"` // required
 	FundingInstruments []*FundingInstrument `json:"funding_instruments,omitempty"`
 	FundingOptionID    string               `json:"funding_option_id,omitempty"`
 	PayerInfo          *PayerInfo           `json:"payer_info,omitempty"`
 }
 
+func NewPayer(paymentMethod PaymentMethod) *Payer {
+	return &Payer{
+		PaymentMethod: paymentMethod,
+	}
+}
+
 type BillingAgreement struct {
-	Name                        string               `json:"name,omitempty"`
-	Description                 string               `json:"description,omitempty"`
-	StartDate                   *time.Time           `json:"start_date,omitempty"`
+	Name                        string               `json:"name,omitempty"`        // required
+	Description                 string               `json:"description,omitempty"` // required
+	StartDate                   string               `json:"start_date,omitempty"`  // required
 	AgreementDetails            *AgreementDetails    `json:"agreement_details,omitempty"`
-	Payer                       *Payer               `json:"payer,omitempty"`
+	Payer                       *Payer               `json:"payer,omitempty"` // required
 	ShippingAddress             *Address             `json:"shipping_address,omitempty"`
 	OverrideMerchantPreferences *MerchantPreferences `json:"override_merchant_preferences,omitempty"`
-	OverrideChargeModels        []*ChargeModelType   `json:"override_charge_models"`
+	OverrideChargeModels        []*ChargeModelType   `json:"override_charge_models,omitempty"`
 	Plan                        *BillingPlan         `json:"plan,omitempty"`
 	Links                       []*Link              `json:"links,omitempty"`
+}
+
+func (b *BillingAgreement) Create(context *Context, billingPlan *BillingPlan) error {
+	b.Plan = &BillingPlan{
+		ID: billingPlan.ID,
+	}
+
+	resp, err := context.clientWithAuth("POST", "/v1/payments/billing-agreements", anyToReader(b))
+	if err != nil {
+		return err
+	}
+
+	// catches any api errors
+	if err = catchError(resp); err != nil {
+		return err
+	}
+
+	return readerToAny(resp.Body, b)
+}
+
+func NewBillingAgreement(name, description string, payer *Payer) *BillingAgreement {
+	return &BillingAgreement{
+		Name:        name,
+		Description: description,
+		StartDate:   time.Now().Add(1 * time.Hour).UTC().Format("2006-01-02T15:04:05Z07:00"),
+		Payer:       payer,
+	}
 }

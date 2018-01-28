@@ -4,20 +4,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/nulloop/gopaypal"
 )
 
 func main() {
-	paypal := &gopaypal.Paypal{
-		Mode:         gopaypal.SandboxMode,
-		ClientID:     "",
-		ClientSecret: "",
+	context := &gopaypal.Context{}
+
+	err := func() error {
+		file, err := os.Open("./token.json")
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		return json.NewDecoder(file).Decode(context)
+	}()
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	paypal.UpdateToken(func(token gopaypal.Token) {
-		data, _ := json.Marshal(&token)
-		fmt.Println("Token: ", string(data))
+	context.Mode = gopaypal.SandboxMode
+
+	context.UpdateToken(func(token *gopaypal.Token) {
+		// use this to store the token into database
+
+		// data, _ := json.Marshal(token)
+		// fmt.Printf("Token: %s\n\n", string(data))
 	})
 
 	paymentDifinition := []*gopaypal.PaymentDefinition{
@@ -37,7 +52,7 @@ func main() {
 			Type:               gopaypal.RegularPaymentDefinitionType,
 			Cycles:             "0",
 			Frequency:          gopaypal.MonthFrequencyType,
-			FrequenceyInterval: "12",
+			FrequenceyInterval: "11",
 			Amount: &gopaypal.Amount{
 				Currency: gopaypal.UnitedStatesDollar,
 				Value:    "2",
@@ -61,14 +76,18 @@ func main() {
 		MerchantPreferences: merchantPreferences,
 	}
 
-	data, _ := json.Marshal(billingPlan)
-	fmt.Println("Req: ", string(data))
+	// data, _ := json.Marshal(billingPlan)
+	// fmt.Println("Req: ", string(data))
 
-	err := billingPlan.Create(paypal)
+	err = billingPlan.Create(context)
 	if err != nil {
 		log.Fatal("Error: ", err)
 	}
 
-	data, _ = json.Marshal(billingPlan)
-	fmt.Println("Resp: ", string(data))
+	err = billingPlan.UpdateState(gopaypal.ActiveBillingPlanState, context)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Created and activated Billing Plan with id : ", billingPlan.ID)
 }

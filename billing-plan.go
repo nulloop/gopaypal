@@ -34,8 +34,8 @@ type BillingPlan struct {
 	Links               []*Link              `json:"links,omitempty"`
 }
 
-func (b *BillingPlan) Create(paypal *Paypal) error {
-	resp, err := paypal.clientWithAuth("POST", "v1/payments/billing-plans", anyToReader(b))
+func (b *BillingPlan) Create(context *Context) error {
+	resp, err := context.clientWithAuth("POST", "v1/payments/billing-plans", anyToReader(b))
 	if err != nil {
 		return err
 	}
@@ -48,16 +48,18 @@ func (b *BillingPlan) Create(paypal *Paypal) error {
 	return readerToAny(resp.Body, b)
 }
 
-func (b *BillingPlan) UpdateState(state BillingPlanState, paypal *Paypal) error {
-	patch := &Patch{
-		Operation: ReplaceOperation,
-		Path:      "/",
-		Value: &BillingPlan{
-			State: state,
+func (b *BillingPlan) UpdateState(state BillingPlanState, context *Context) error {
+	patches := []*Patch{
+		&Patch{
+			Operation: ReplaceOperation,
+			Path:      "/",
+			Value: &BillingPlan{
+				State: state,
+			},
 		},
 	}
 
-	resp, err := paypal.clientWithAuth("PATCH", fmt.Sprintf("v1/payments/billing-plans/%s", b.ID), anyToReader(patch))
+	resp, err := context.clientWithAuth("PATCH", fmt.Sprintf("v1/payments/billing-plans/%s", b.ID), anyToReader(patches))
 	if err != nil {
 		return err
 	}

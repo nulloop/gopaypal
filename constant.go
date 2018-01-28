@@ -7,7 +7,12 @@ func (o Operation) String() string {
 }
 
 const (
-	ReplaceOperation Operation = "REPLACE"
+	AddOperation     Operation = "add"
+	RemoveOperation  Operation = "remove"
+	ReplaceOperation Operation = "replace"
+	MoveOperation    Operation = "move"
+	CopyOperation    Operation = "copy"
+	TestOperation    Operation = "test"
 )
 
 type Bool string
